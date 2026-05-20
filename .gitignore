@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# SQLite データベース（各環境で自動生成されるためコミットしない）
+travel.db
+
+# アップロードされた写真
+static/uploads/*
+!static/uploads/.gitkeep

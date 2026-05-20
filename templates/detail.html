@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}{{ trip.title }} — Tabi{% endblock %}
+{% block content %}
+<style>
+  .back { display:inline-block; color:var(--muted); text-decoration:none; font-size:0.88rem; margin-bottom:14px; }
+  .back:hover { color:var(--accent); }
+
+  .hero { position:relative; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);
+          min-height:230px; display:flex; align-items:flex-end; }
+  .hero .bg { position:absolute; inset:0; background:linear-gradient(135deg,#cfe6e0,#e9e1d4); }
+  .hero .bg img { width:100%; height:100%; object-fit:cover; }
+  .hero .scrim { position:absolute; inset:0; background:linear-gradient(to top, rgba(20,18,16,0.72), rgba(20,18,16,0.05) 60%, transparent); }
+  .hero .htext { position:relative; padding:24px; color:#fff; width:100%; }
+  .hero h1 { margin:0 0 6px; font-size:1.8rem; text-shadow:0 1px 8px rgba(0,0,0,0.3); }
+  .hero .hmeta { font-size:0.95rem; opacity:0.95; display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+
+  .actions-bar { display:flex; gap:10px; margin:16px 0 6px; flex-wrap:wrap; }
+
+  .section { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow);
+             padding:22px 22px 24px; margin-top:22px; scroll-margin-top:80px; }
+  .section h2 { font-size:1.15rem; margin:0 0 16px; display:flex; align-items:center; gap:9px; }
+  .section h2 .ic { font-size:1.2rem; }
+
+  .day-group { margin-bottom:18px; }
+  .day-label { font-weight:800; color:var(--accent-dark); font-size:0.95rem; margin-bottom:8px;
+               display:inline-block; background:var(--accent-soft); padding:3px 12px; border-radius:999px; }
+  .timeline { border-left:2px solid var(--line); margin-left:8px; padding-left:18px; }
+  .tl-item { position:relative; padding:8px 0; display:flex; gap:14px; align-items:flex-start; }
+  .tl-item::before { content:""; position:absolute; left:-25px; top:15px; width:9px; height:9px;
+                     border-radius:50%; background:var(--accent); }
+  .tl-item .t { font-weight:700; color:var(--accent-dark); min-width:52px; font-variant-numeric:tabular-nums; }
+  .tl-item .act { flex:1; }
+  .tl-actions { display:flex; gap:6px; }
+
+  .detail-cat { margin-bottom:16px; }
+  .detail-cat .cat-head { font-weight:800; font-size:0.92rem; margin-bottom:8px; color:var(--ink); }
+  .detail-cat .cat-head .chip { background:var(--accent-soft); color:var(--accent-dark);
+                                 border-radius:6px; padding:1px 8px; font-size:0.78rem; margin-right:6px; }
+  .ditem { border:1px solid var(--line); border-radius:12px; padding:11px 14px; margin-bottom:8px;
+           display:flex; justify-content:space-between; gap:12px; }
+  .ditem .dname { font-weight:700; }
+  .ditem .subchip { background:#eef3f1; color:var(--accent-dark); font-size:0.74rem;
+                    border-radius:6px; padding:1px 8px; margin-right:7px; }
+  .ditem .dinfo { color:var(--muted); font-size:0.88rem; white-space:pre-wrap; margin-top:2px; }
+  .ditem .dcost { color:var(--ink); font-size:0.85rem; margin-bottom:6px; }
+  .ditem a.dlink { font-size:0.83rem; }
+  .ditem .right { text-align:right; white-space:nowrap; }
+  .ditem-actions { display:flex; gap:6px; justify-content:flex-end; }
+
+  .album { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:10px; }
+  .photo { position:relative; aspect-ratio:1; border-radius:12px; overflow:hidden; background:var(--accent-soft); }
+  .photo img { width:100%; height:100%; object-fit:cover; display:block; }
+  .photo .cap { position:absolute; left:0; right:0; bottom:0; background:linear-gradient(transparent,rgba(0,0,0,.6));
+                color:#fff; font-size:0.74rem; padding:14px 8px 5px; }
+  .photo .pdel { position:absolute; top:6px; right:6px; }
+  .photo .pdel button { background:rgba(0,0,0,.55); color:#fff; border:none; border-radius:8px;
+                        padding:3px 8px; font-size:0.75rem; cursor:pointer; }
+
+  .memo-text { white-space:pre-wrap; color:var(--ink); }
+  .memo-empty { color:var(--muted); }
+
+  .add-form { margin-top:14px; padding-top:16px; border-top:1px dashed var(--line);
+              display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .add-form input, .add-form select, .add-form textarea {
+    padding:8px 11px; border:1px solid var(--line); border-radius:9px; font-size:0.9rem;
+    font-family:inherit; background:var(--surface); }
+  .add-form input:focus, .add-form select:focus, .add-form textarea:focus { outline:none; border-color:var(--accent); }
+  .add-form .grow { flex:1; min-width:140px; }
+  .add-form .w-day { width:64px; } .add-form .w-time { width:110px; } .add-form .w-cost { width:110px; }
+  .inline-del { display:inline; }
+  .empty-mini { color:var(--muted); font-size:0.9rem; }
+
+  /* 詳細情報フォーム（カテゴリ連動） */
+  .detail-form { display:block; }
+  .df-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; width:100%; }
+  .df-field { display:flex; flex-direction:column; gap:4px; }
+  .df-field.full { grid-column:1 / -1; }
+  .df-field label { font-size:0.8rem; font-weight:700; color:var(--ink); }
+  .df-field input, .df-field select {
+    padding:9px 11px; border:1px solid var(--line); border-radius:9px; font-size:0.92rem;
+    font-family:inherit; background:var(--surface); width:100%; }
+  .df-field input:focus, .df-field select:focus { outline:none; border-color:var(--accent); }
+  .df-actions { margin-top:14px; }
+
+  /* マウス（ホバー可能）端末でだけ、操作ボタンをホバー表示にする */
+  @media (hover: hover) {
+    .tl-actions { opacity:0; transition:.15s; }
+    .tl-item:hover .tl-actions { opacity:1; }
+    .photo .pdel { opacity:0; transition:.15s; }
+    .photo:hover .pdel { opacity:1; }
+  }
+
+  /* スマホ向け調整 */
+  @media (max-width: 560px) {
+    .hero h1 { font-size:1.45rem; }
+    .hero .htext { padding:18px; }
+    .section { padding:18px 16px 20px; }
+    .df-grid { grid-template-columns:1fr; }
+    .add-form { flex-direction:column; align-items:stretch; }
+    .add-form .w-day, .add-form .w-time, .add-form .w-cost, .add-form .grow { width:100%; }
+    .add-form > button { width:100%; }
+    .ditem { flex-direction:column; }
+    .ditem .right { text-align:left; white-space:normal; }
+    .ditem-actions { justify-content:flex-start; }
+    .tl-item { flex-wrap:wrap; }
+    .tl-actions { width:100%; }
+  }
+</style>
+
+<a class="back" href="{{ url_for('index') }}">← 一覧へ戻る</a>
+
+<div class="hero">
+  <div class="bg">
+    {% if photos %}<img src="{{ url_for('static', filename='uploads/' ~ photos[0].filename) }}" alt="">{% endif %}
+  </div>
+  <div class="scrim"></div>
+  <div class="htext">
+    <h1>{{ trip.title }}</h1>
+    <div class="hmeta">
+      <span>📍 {{ trip.destination }}</span>
+      {% if trip.start_date %}<span>🗓 {{ trip.start_date }}{% if trip.end_date and trip.end_date != trip.start_date %} 〜 {{ trip.end_date }}{% endif %}</span>{% endif %}
+      {% if trip.budget %}<span>💰 {{ "{:,}".format(trip.budget) }}円</span>{% endif %}
+      <span class="badge s-{{ trip.status }}">{{ trip.status }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="actions-bar">
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('edit', trip_id=trip.id) }}">基本情報を編集</a>
+  <form class="inline-del" method="post" action="{{ url_for('delete', trip_id=trip.id) }}"
+        onsubmit="return confirm('「{{ trip.title }}」を削除しますか？（写真・旅程もすべて消えます）');">
+    <button type="submit" class="btn btn-danger btn-sm">旅を削除</button>
+  </form>
+</div>
+
+<!-- 旅程 -->
+<section class="section" id="schedule">
+  <h2><span class="ic">🗺️</span> タイムスケジュール</h2>
+  {% if schedule %}
+    {% for day, items in schedule.items() %}
+      <div class="day-group">
+        <div class="day-label">Day {{ day }}</div>
+        <div class="timeline">
+          {% for item in items %}
+            <div class="tl-item">
+              <span class="t">{{ item.time or '—' }}</span>
+              <span class="act">{{ item.activity }}</span>
+              <span class="tl-actions">
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('edit_schedule', item_id=item.id) }}">編集</a>
+                <form class="inline-del" method="post" action="{{ url_for('delete_schedule', item_id=item.id) }}">
+                  <button class="btn btn-danger btn-sm" type="submit">削除</button>
+                </form>
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty-mini">まだ予定がありません。下から追加できます。</p>
+  {% endif %}
+
+  <form class="add-form" method="post" action="{{ url_for('add_schedule', trip_id=trip.id) }}">
+    <input class="w-day" type="number" name="day" min="1" value="1" title="何日目">
+    <input class="w-time" type="time" name="time" title="時刻">
+    <input class="grow" type="text" name="activity" placeholder="予定（例：清水寺を観光）" required>
+    <button class="btn btn-primary btn-sm" type="submit">＋ 予定を追加</button>
+  </form>
+</section>
+
+<!-- 詳細情報 -->
+<section class="section" id="details">
+  <h2><span class="ic">📋</span> 詳細情報</h2>
+  {% if details %}
+    {% for cat, ditems in details.items() %}
+      <div class="detail-cat">
+        <div class="cat-head"><span class="chip">{{ cat }}</span></div>
+        {% for item in ditems %}
+          <div class="ditem">
+            <div>
+              <div class="dname">{% if item.subtype %}<span class="subchip">{{ item.subtype }}</span>{% endif %}{{ item.name }}</div>
+              {% if item.place_from or item.place_to %}
+                <div class="dinfo">{{ item.place_from or '' }} → {{ item.place_to or '' }}</div>
+              {% endif %}
+              {% if item.time_from or item.time_to %}
+                <div class="dinfo">⏰ {{ item.time_from or '' }}{% if item.time_to %} 〜 {{ item.time_to }}{% endif %}</div>
+              {% endif %}
+              {% if item.info %}<div class="dinfo">{{ item.info }}</div>{% endif %}
+              {% if item.url %}<a class="dlink" href="{{ item.url }}" target="_blank" rel="noopener">🔗 リンクを開く</a>{% endif %}
+            </div>
+            <div class="right">
+              {% if item.cost %}<div class="dcost">{{ "{:,}".format(item.cost) }}円</div>{% endif %}
+              <div class="ditem-actions">
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('edit_detail', item_id=item.id) }}">編集</a>
+                <form class="inline-del" method="post" action="{{ url_for('delete_detail', item_id=item.id) }}">
+                  <button class="btn btn-danger btn-sm" type="submit">削除</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty-mini">移動・宿泊・食事などの情報を、必要な分だけ追加できます。</p>
+  {% endif %}
+
+  <form class="detail-form add-form" method="post" action="{{ url_for('add_detail', trip_id=trip.id) }}">
+    {% set item = {} %}
+    {% include '_detail_fields.html' %}
+    <div class="df-actions">
+      <button class="btn btn-primary btn-sm" type="submit">＋ 詳細を追加</button>
+    </div>
+  </form>
+</section>
+
+<!-- アルバム -->
+<section class="section" id="album">
+  <h2><span class="ic">📷</span> アルバム</h2>
+  {% if photos %}
+    <div class="album">
+      {% for p in photos %}
+        <div class="photo">
+          <img src="{{ url_for('static', filename='uploads/' ~ p.filename) }}" alt="">
+          {% if p.caption %}<div class="cap">{{ p.caption }}</div>{% endif %}
+          <div class="pdel">
+            <form method="post" action="{{ url_for('delete_photo', photo_id=p.id) }}">
+              <button type="submit" title="削除">✕</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty-mini">まだ写真がありません。</p>
+  {% endif %}
+
+  <form class="add-form" method="post" action="{{ url_for('add_photo', trip_id=trip.id) }}" enctype="multipart/form-data">
+    <input type="file" name="photos" accept="image/*" multiple required>
+    <input class="grow" type="text" name="caption" placeholder="キャプション（任意・まとめて付与）">
+    <button class="btn btn-primary btn-sm" type="submit">＋ 写真を追加</button>
+  </form>
+</section>
+
+<!-- メモ（一番下） -->
+<section class="section" id="memo">
+  <h2><span class="ic">📝</span> メモ</h2>
+  {% if trip.memo %}
+    <div class="memo-text">{{ trip.memo }}</div>
+  {% else %}
+    <div class="memo-empty">メモはまだありません。「基本情報を編集」から書けます。</div>
+  {% endif %}
+</section>
+
+<script src="{{ url_for('static', filename='detail_form.js') }}"></script>
+{% endblock %}

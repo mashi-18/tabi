@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+
+  <div class="toolbar">
+    <form class="searchbar" method="get" action="{{ url_for('index') }}">
+      <input type="text" name="q" value="{{ q }}"
+             placeholder="旅行名・行き先・予定・メモなどで検索…">
+      <button type="submit" class="btn btn-primary">検索</button>
+    </form>
+    <div class="pills">
+      <a class="pill {{ 'active' if not current_status and not q else '' }}" href="{{ url_for('index') }}">すべて</a>
+      {% for s in STATUS_CHOICES %}
+        <a class="pill {{ 'active' if current_status == s else '' }}"
+           href="{{ url_for('index', status=s) }}">{{ s }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if q %}
+    <p style="color:var(--muted); font-size:0.9rem; margin-top:-8px;">
+      「{{ q }}」の検索結果：{{ trips|length }}件
+    </p>
+  {% endif %}
+
+  {% if not trips %}
+    <div class="empty">
+      <div class="big">🧳</div>
+      {% if q or current_status %}
+        条件に合う旅が見つかりませんでした。
+      {% else %}
+        まだ旅がありません。<br>「＋ 新しい旅」から最初の計画を作ってみましょう。
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="grid">
+      {% for trip in trips %}
+        <a class="trip-card" href="{{ url_for('detail', trip_id=trip.id) }}">
+          {% if trip.cover %}
+            <div class="cover"><img src="{{ url_for('static', filename='uploads/' ~ trip.cover) }}" alt=""></div>
+          {% else %}
+            <div class="cover placeholder">🗺️</div>
+          {% endif %}
+          <div class="pad">
+            <h3>{{ trip.title }}</h3>
+            <p class="place">📍 {{ trip.destination }}</p>
+            <div class="foot">
+              <span class="date-range">
+                {% if trip.start_date %}{{ trip.start_date }}{% if trip.end_date and trip.end_date != trip.start_date %} 〜 {{ trip.end_date }}{% endif %}{% else %}日程未定{% endif %}
+              </span>
+              <span class="badge s-{{ trip.status }}">{{ trip.status }}</span>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+{% endblock %}

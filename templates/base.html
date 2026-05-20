@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Tabi{% endblock %}</title>
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --surface: #ffffff;
+      --ink: #232020;
+      --muted: #918a82;
+      --accent: #0d7d6e;
+      --accent-dark: #0a5d52;
+      --accent-soft: #e3efec;
+      --line: #ece7df;
+      --danger: #c0492f;
+      --shadow: 0 6px 24px rgba(40, 35, 30, 0.07);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+                   -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--ink); line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); }
+
+    /* ヘッダー */
+    .site-header {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(246,244,239,0.85); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .site-header .inner {
+      max-width: 960px; margin: 0 auto; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      font-size: 1.5rem; font-weight: 800; letter-spacing: 0.06em;
+      color: var(--ink); text-decoration: none; display: inline-flex; align-items: baseline; gap: 2px;
+    }
+    .logo .dot { color: var(--accent); }
+    .logo .glyph { font-size: 1rem; margin-left: 4px; }
+
+    main { max-width: 960px; margin: 0 auto; padding: 28px 20px 80px; }
+
+    /* ボタン */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+      border: none; border-radius: 999px; font-size: 0.92rem; font-weight: 600;
+      padding: 9px 18px; text-decoration: none; font-family: inherit; transition: .15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-sm { padding: 6px 13px; font-size: 0.82rem; }
+    .btn-danger { color: var(--danger); background: transparent; border: 1px solid #efd3cc; }
+    .btn-danger:hover { background: #fbeae6; }
+
+    /* フラッシュ */
+    .flash {
+      background: var(--accent-soft); border: 1px solid #c7e0d9; color: var(--accent-dark);
+      padding: 11px 16px; border-radius: 12px; margin-bottom: 18px; font-size: 0.92rem;
+    }
+
+    /* 検索バー */
+    .toolbar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+    .searchbar { display: flex; gap: 10px; }
+    .searchbar input {
+      flex: 1; padding: 12px 18px; border: 1px solid var(--line); border-radius: 999px;
+      font-size: 0.98rem; background: var(--surface); font-family: inherit;
+    }
+    .searchbar input:focus { outline: none; border-color: var(--accent); }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      text-decoration: none; font-size: 0.85rem; padding: 6px 15px; border-radius: 999px;
+      border: 1px solid var(--line); color: var(--muted); background: var(--surface);
+    }
+    .pill.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    /* カードグリッド（一覧） */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+    .trip-card {
+      background: var(--surface); border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow); text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s;
+    }
+    .trip-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(40,35,30,0.12); }
+    .trip-card .cover { aspect-ratio: 4 / 3; overflow: hidden; background: var(--accent-soft); }
+    .trip-card .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .trip-card .cover.placeholder {
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #d7e9e4, #e9e2d6); font-size: 2rem;
+    }
+    .trip-card .pad { padding: 14px 16px 18px; }
+    .trip-card h3 { margin: 0 0 4px; font-size: 1.08rem; }
+    .trip-card .place { color: var(--muted); font-size: 0.88rem; margin: 0; }
+    .trip-card .foot { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .date-range { color: var(--muted); font-size: 0.8rem; }
+
+    /* ステータスバッジ */
+    .badge { font-size: 0.74rem; font-weight: 700; padding: 3px 11px; border-radius: 999px;
+             background: var(--accent-soft); color: var(--accent-dark); white-space: nowrap; }
+    .badge.s-行った { background: #def3e2; color: #1f7a43; }
+    .badge.s-計画中 { background: #fdf0cf; color: #9a6a12; }
+    .badge.s-行きたい { background: #e6eefb; color: #2a5bb5; }
+
+    /* 空状態 */
+    .empty { text-align: center; color: var(--muted); padding: 60px 20px; }
+    .empty .big { font-size: 2.4rem; margin-bottom: 8px; }
+
+    /* スマホ向け調整 */
+    @media (max-width: 600px) {
+      main { padding: 20px 14px 64px; }
+      .site-header .inner { padding: 12px 14px; }
+      .logo { font-size: 1.3rem; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .searchbar input { padding: 11px 14px; font-size: 0.92rem; }
+      .trip-card h3 { font-size: 1rem; }
+    }
+
+    footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 30px 0; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <a class="logo" href="{{ url_for('index') }}">Tabi<span class="dot">.</span><span class="glyph">✈</span></a>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('add') }}">＋ 新しい旅</a>
+    </div>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer>Tabi — 旅のしおり</footer>
+</body>
+</html>
