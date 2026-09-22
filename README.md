@@ -2,9 +2,9 @@
 
 行きたい旅行を「旅のしおり」として作り込める Web アプリです。
 旅程（タイムスケジュール）・移動や宿泊などの詳細情報・写真アルバム・メモをまとめて管理できます。<br>
-[🛫Tabiへのリンク🚅](https://mashi18.pythonanywhere.com)　
+[Tabiへのリンク](https://mashi18.pythonanywhere.com)　
 
-すべて**無料のソフトウェア**（Flask + SQLite）で動作し、サーバー代もかかりません。
+すべて無料のソフトウェア（Flask + SQLite）で動作し、サーバー代もかかりません。
 
 ## 主な機能
 
