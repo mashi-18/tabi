@@ -42,7 +42,7 @@ travel_plan-main/
 └── README.md
 ```
 
-画面処理（`app.py`）とデータ処理（`travel_db.py`）を分離し、見通しのよい構成にしています。
+画面処理（`app.py`）とデータ処理（`travel_db.py`）を分離した構成にしています。
 
 ## データベース設計
 
